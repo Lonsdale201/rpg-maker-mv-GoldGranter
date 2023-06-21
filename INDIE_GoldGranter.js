@@ -184,13 +184,6 @@
 * @default false
 * @desc Enable or disabe the gold notification system
 *
-* @param NotificationOnlyForThePluginItself
-* @text Show only 
-* @parent Notifications
-* @type boolean
-* @default true
-* @desc set true, if you want to notification only show if the plugin gold added to the player
-*
 * @param NotificationGoldThousandSeparator
 * @text Thousand separator
 * @parent Notifications
