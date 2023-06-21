@@ -9,6 +9,7 @@
 * 
 //=============================================================================
 // Descritpion
+// Current version: 1.2
 //=============================================================================
 * The plugin allows you to give Gold to the player, at set intervals (this is repeated continuously).
 * In addition to the interval, you can also control the amount of gold you give,
@@ -39,6 +40,23 @@
 *  - DisableNotifications
 *  - SetGoldInterval 30 (just change the number value)
 * 
+*
+//=============================================================================
+// Script Calls
+//=============================================================================
+*
+* getGoldInterval()
+* you can use like getGoldInterval() > 3 for the conditional branch. (this just example)
+*
+//=============================================================================
+// Message Dynamic Commands
+//=============================================================================
+*
+* /g[5] where the g = the amount of gold that player have, and the [5] where can add color to the text.
+* /in[2] where the in = the interval when the player gain a gold, and [2] where can add color to the text.
+* /am[5] where the am = the amount of gold that player will gain, and the [5] where can add color to the text.
+*
+*
 //=============================================================================
 // Contact
 //=============================================================================
@@ -47,8 +65,19 @@
 *  Github: https://github.com/Lonsdale201
 *
 * ==============================================================================
-* Changelog
+* Changelog 1.2
 * 
+* New Play Se parameter when player gain a gold. 
+* New Scrip call: getGoldInterval() you can use like getGoldInterval() > 3 for the conditional branch.
+* Added three Message commands:
+*
+* /g[5] where the g = the amount of gold that player have, and the [5] where can add color to the text.
+* /in[2] where the in = the interval when the player gain a gold, and [2] where can add color to the text.
+* /am[5] where the am = the amount of gold that player will gain, and the [5] where can add color to the text.
+* 
+* Resolved the isse, when gold amount decreased, the notification show a double operator (+-)
+* Resolved the issue, when the decreased gold equal to player gold, show a bad informations in the popup
+* ------------------------------------------------------------------------------
 * 1.0 initial release
 * 
 * ==============================================================================
@@ -155,6 +184,13 @@
 * @default false
 * @desc Enable or disabe the gold notification system
 *
+* @param NotificationOnlyForThePluginItself
+* @text Show only 
+* @parent Notifications
+* @type boolean
+* @default true
+* @desc set true, if you want to notification only show if the plugin gold added to the player
+*
 * @param NotificationGoldThousandSeparator
 * @text Thousand separator
 * @parent Notifications
@@ -185,6 +221,13 @@
 * @default 0
 * @desc If you want, you set a starter gold. When game start player automatice have this amount of money, or set 0 for disable.
 *
+* @param PlayAudioOnGoldGain
+* @text Play audio 
+* @parent Others
+* @type file
+* @dir audio/se/
+* @desc If you want, when the plkayer gain a gold, play a SE sound
+*
 */
 
 var INDIE = INDIE || {};
@@ -201,6 +244,7 @@ INDIE.GoldGranter = INDIE.GoldGranter || {};
 
     $.Gold = {
         enabled: ($.Parameters['EnableAtGameStart'].toLowerCase() === 'true'),
+        PlayAudioOnGoldGain: String($.Parameters['PlayAudioOnGoldGain']),
         MaxGoldPlayer: Number($.Parameters['MaxGoldPlayer']) || 10000,
         switchToActiveGold: Number($.Parameters['SwitchToActiveGold']) || 0,
         amount: Number($.Parameters['GoldAmount']),
@@ -251,7 +295,7 @@ Game_Party.prototype.gold = function() {
             $gameParty.gainGold($.Gold.amount);
         }
     }
-// ez tuti jooo!
+
     var _Game_Party_gainGold = Game_Party.prototype.gainGold;
 Game_Party.prototype.gainGold = function(amount) {
     _Game_Party_gainGold.call(this, amount);
@@ -319,12 +363,19 @@ Game_Party.prototype.gainGold = function(amount) {
             }
         }
         
+        var newGold = $gameParty.gold();
+        // Play sound effect if an audio file is selected
+        if (newGold > oldGold && $.Gold.PlayAudioOnGoldGain !== "") {
+            AudioManager.playSe({name: $.Gold.PlayAudioOnGoldGain, volume: 100, pitch: 100, pan: 0});
+        }
+        
         // Update the previous gold amount
         this.Gold.previousGold = oldGold;
     
         this._goldGivingTimeout = null;
         this.startGoldGiving();
     };
+    
     
 
     $.pauseGoldGiving = function() {
@@ -430,6 +481,41 @@ Game_Party.prototype.gainGold = function(amount) {
         
     };
 
+
+     //=============================================================================
+    // ** Script Calls for public
+    //=============================================================================
+
+    // use the getGoldInterval() < 3 example for the conditional branch
+
+    window.getGoldInterval = function() {
+        return $.Gold.interval;
+    };
+    
+    //=============================================================================
+    // ** Dynamic Message Commands
+    //=============================================================================
+
+
+    var _Window_Message_convertEscapeCharacters =
+    Window_Message.prototype.convertEscapeCharacters;
+    Window_Message.prototype.convertEscapeCharacters = function(text) {
+    text = _Window_Message_convertEscapeCharacters.call(this, text);
+    // /g[5] where the g = the amount of gold that player have, and the [5] where can add color to the text.
+    text = text.replace(/\/g\[(\d*)\]/gi, function(match, p1) {
+            return '\x1bC[' + p1 + ']' + $gameParty.gold() + '\x1bC[0]';
+        });
+        // /am[5] where the am = the amount of gold that player will gain, and the [5] where can add color to the text.
+        text = text.replace(/\/am\[(\d*)\]/gi, function(match, p1) {
+            return '\x1bC[' + p1 + ']' + $.Gold.amount + '\x1bC[0]';
+        });
+        // return text;
+       // /in[2] where the in = the interval when the player gain a gold, and [2] where can add color to the text.
+        text = text.replace(/\/in\[(\d*)\]/gi, function(match, p1) {
+            return '\x1bC[' + p1 + ']' + $.Gold.interval + '\x1bC[0]';
+        });
+        return text;
+    };
 
 
     //=============================================================================
@@ -540,15 +626,20 @@ Game_Party.prototype.gainGold = function(amount) {
 
     var _Scene_Map_start = Scene_Map.prototype.start;
 
+    
     Scene_Map.prototype.start = function() {
         _Scene_Map_start.call(this);
         this.createGoldNotificationWindow();
         if ($.Gold.shouldAddStarterGold) {
-            $gameParty.gainGold($.Gold.StarterGold);
+            $gameParty.gainGold($.Gold.StarterGold, false, true); 
             $.Gold.StarterGoldAdded = true;
             $.Gold.shouldAddStarterGold = false;
         }
     };
+
+
+    
+   
 
     //=============================================================================
     // ** Goldscreen display system
@@ -690,14 +781,16 @@ Game_Party.prototype.gainGold = function(amount) {
     INDIE_GoldNotificationWindow.prototype.refresh = function(amount) {
         this.contents.clear();
         var currencyUnit = $dataSystem.currencyUnit;
-
+    
         if (amount !== undefined && $.Gold.NotificationGoldThousandSeparator) {
             amount = Number(amount).toLocaleString('en-US');
         }
-
-        var amountStr = "+" + amount + " " + currencyUnit;
+    
+        var amountStr = (amount >= 0 ? "+" : "") + amount + " " + currencyUnit;
         this.contents.fontSize = this._fontSize; // Set the font size
-        this.drawText(amountStr, this._textOffsetX, this._textOffsetY, this.width - this.padding - 20, 'center'); // Apply the text offset
+        this.drawText(amountStr, this._textOffsetX, this._textOffsetY, this.width - this.padding - 20, 'center'); // Apply
+        this.contents.fontSize = this._fontSize; 
+        this.drawText(amountStr, this._textOffsetX, this._textOffsetY, this.width - this.padding - 20, 'center'); 
     };
 
 
@@ -718,25 +811,18 @@ Game_Party.prototype.gainGold = function(amount) {
         this.windowskin = ImageManager.loadSystem('Window'); // Loading the default window skin sorry.
     };
 
-    // not necessary
-    var _Game_Interpreter_command125 = Game_Interpreter.prototype.command125;
+    // show if current amount equal to decrease amount - for the notifications.
 
-    Game_Interpreter.prototype.command125 = function() {
-        var value = this.operateValue(this._params[0], this._params[1], this._params[2]);
-        
-        if ($gameParty.gold() + value > $.Gold.MaxGoldPlayer) {
-            value = $.Gold.MaxGoldPlayer - $gameParty.gold();
+    Game_Party.prototype.gainGold = function(amount, fromPlugin, fromStarterGold) {
+        var oldGold = this._gold;
+        this._gold = (oldGold + amount).clamp(0, this.maxGold());
+    
+        if (!fromStarterGold && (($.Gold.NotificationOnlyForThePluginItself && fromPlugin) || !$.Gold.NotificationOnlyForThePluginItself)) {
+            var change = this._gold - oldGold;
+            if (SceneManager._scene._goldNotificationWindow) {
+                SceneManager._scene._goldNotificationWindow.open(change);
+            }
         }
-        
-        var oldGold = $gameParty.gold();
-        $gameParty.gainGold(value);
-        var newGold = $gameParty.gold();
-
-        if (newGold > oldGold && $.Gold.NotificationEnable) { 
-            SceneManager._scene._goldNotificationWindow.open(value);
-        }
-
-        return true;
     };
 
 
