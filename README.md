@@ -40,7 +40,9 @@ getGoldInterval() you can use like getGoldInterval() > 3 for the conditional bra
 **Dynamic Message Commands:**
 
 /g[5] where the g = the amount of gold that player have, and the [5] where can add color to the text.
+
 /in[2] where the in = the interval when the player gain a gold, and [2] where can add color to the text.
+
 /am[5] where the am = the amount of gold that player will gain, and the [5] where can add color to the text.
 
 ### FAQ
