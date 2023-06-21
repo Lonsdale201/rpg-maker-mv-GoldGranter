@@ -1,4 +1,4 @@
-# rpg-maker-mv-GoldGranter
+# Rpg Maker MV - GoldGranter Plugin
 This RPG MAKER MV - This plugin can modify the gold system with various way.
 
   The plugin allows you to give Gold to the player, at set intervals (this is repeated continuously).
