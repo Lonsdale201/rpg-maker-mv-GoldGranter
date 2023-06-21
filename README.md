@@ -18,7 +18,7 @@ This RPG MAKER MV - plugin can modify the gold system with various way.
 
 ## How to setup?
 
-Just download the INDIE_GoldGranter.js file, and use the rpg maker mv plugin manager to add it, and switch to ON.
+Just download the **INDIE_GoldGranter.js** file, paste it in your project folder /js/plugins and use the rpg maker mv plugin manager to add it, and switch to ON.
 
 **Plugin Commands:**
 
