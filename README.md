@@ -22,15 +22,30 @@ Just download the **INDIE_GoldGranter.js** file, paste it in your project folder
 
 **Plugin Commands:**
 
-   - StartGoldGiving (cant overwite thr switcher at the moment)
+  - StartGoldGiving (cant overwite thr switcher at the moment)
   - StopGoldGiving 
   - SetGoldAmount 500  (just change the number value)
   - SetMaxGold 1000 (just change the number value)
-  - AddMapID 4 (will not owerwrite exiting maps), 
+  - AddMapID 4 (will not owerwrite exiting maps) (just change the id, if multiple use comma separate like 1,10,20)
   - ClearAllMapIDs
   - EnableNotifications 
   - DisableNotifications
   - SetGoldInterval 30 (just change the number value)
+
+### FAQ
+
+**1, Can i change the window graphic for the notification and and the gold on screen?**
+Not yet, will ad this within the next versions later..
+
+**2, The StartGoldGiving cant start the gold giving system.**
+At the moment if you are using  The  "switcher Ative gold" parameter the StartGoldGiving cant overwrite. Will fix it in the next version.
+
+**3 if I use another plugin to maximize the gold that the player may have, what do I need to set here?**
+Just set The Max gold parameter to 0.
+
+**4, The plugin Notification system react all gold changes?**
+At the moment yes. In a future version will add a new settings for the notifications like, only with the Plugin notif,  or everyting, and or just increase, and for decrease too.
+
 
 
 
