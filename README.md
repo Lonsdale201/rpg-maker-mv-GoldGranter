@@ -7,6 +7,7 @@ This RPG MAKER MV - plugin can modify the gold system with various way.
 * during dialogue, battle, and menu. You can also set criteria, such as which maps
 * you get the gold on, or whether you need to turn on Switcher to start giving gold. 
 * Optionally, you can specify that it should start giving it to us when the game starts.
+* You can select to play an SE sound when the player gain a gold. (only the one received by my plugin.)
 * 
 * We can also display a Gold Window so we don't have to navigate to the menu to know how much we have.
 * You can specify the maximum amount of gold that the player can have, and if 
