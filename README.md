@@ -32,6 +32,17 @@ Just download the **INDIE_GoldGranter.js** file, paste it in your project folder
   - DisableNotifications
   - SetGoldInterval 30 (just change the number value)
 
+
+**Script calls:**
+
+getGoldInterval() you can use like getGoldInterval() > 3 for the conditional branch. (this just example operation)
+
+**Dynamic Message Commands:**
+
+/g[5] where the g = the amount of gold that player have, and the [5] where can add color to the text.
+/in[2] where the in = the interval when the player gain a gold, and [2] where can add color to the text.
+/am[5] where the am = the amount of gold that player will gain, and the [5] where can add color to the text.
+
 ### FAQ
 
 **1, Can i change the window graphic for the notification and and the gold on screen?**
@@ -50,4 +61,19 @@ At the moment yes. In a future version will add a new settings for the notificat
 
 
 ### Changelog
+
+Changelog 1.2
+ 
+New Play Se parameter when player gain a gold. 
+New Scrip call: getGoldInterval() you can use like getGoldInterval() > 3 for the conditional branch.
+Added three Message commands:
+
+/g[5] where the g = the amount of gold that player have, and the [5] where can add color to the text.
+/in[2] where the in = the interval when the player gain a gold, and [2] where can add color to the text.
+/am[5] where the am = the amount of gold that player will gain, and the [5] where can add color to the text.
+
+Bug fixes:
+Resolved the isse, when gold amount decreased, the notification show a double operator (+-)
+Resolved the issue, when the decreased gold equal to player gold, show a bad informations in the popup
+
 1.0 Initial release
