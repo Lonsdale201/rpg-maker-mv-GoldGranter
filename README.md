@@ -1,5 +1,5 @@
 # Rpg Maker MV - GoldGranter Plugin
-This RPG MAKER MV - This plugin can modify the gold system with various way.
+This RPG MAKER MV - plugin can modify the gold system with various way.
 
   The plugin allows you to give Gold to the player, at set intervals (this is repeated continuously).
 * In addition to the interval, you can also control the amount of gold you give,
@@ -20,17 +20,17 @@ This RPG MAKER MV - This plugin can modify the gold system with various way.
 
 Just download the INDIE_GoldGranter.js file, and use the rpg maker mv plugin manager to add it, and switch to ON.
 
-** Plugin Commands: **
+**Plugin Commands:**
 
-- StartGoldGiving (cant overwite thr switcher at the moment)
-*  - StopGoldGiving 
-*  - SetGoldAmount 500  (just change the number value)
-*  - SetMaxGold 1000 (just change the number value)
-*  - AddMapID 4 (will not owerwrite exiting maps), 
-*  - ClearAllMapIDs
-*  - EnableNotifications 
-*  - DisableNotifications
-*  - SetGoldInterval 30 (just change the number value)
+   - StartGoldGiving (cant overwite thr switcher at the moment)
+  - StopGoldGiving 
+  - SetGoldAmount 500  (just change the number value)
+  - SetMaxGold 1000 (just change the number value)
+  - AddMapID 4 (will not owerwrite exiting maps), 
+  - ClearAllMapIDs
+  - EnableNotifications 
+  - DisableNotifications
+  - SetGoldInterval 30 (just change the number value)
 
 
 
