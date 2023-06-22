@@ -20,6 +20,7 @@ This RPG MAKER MV - plugin can modify the gold system with various way.
 * You only fight if you don't have enough money (no money loss)
 * You can set the amount and whether you want to use this system.
 * There are also several plugin commands you can use, so you can override plugin settings at any time.
+* You can set a cheat key command to get instant money when you press it. Switchable, adjustable key command and amount.
 
 ## How to setup?
 
@@ -69,6 +70,10 @@ At the moment the notification system better use only for debugging.
 
 
 ### Changelog
+
+1.4.0
+New Debug (cheat commands)
+Fix the "ClearAllMapIDs" Plugin command, and better handling the mapIDs
 
 1.3.0
 
