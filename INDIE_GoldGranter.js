@@ -9,7 +9,7 @@
 * 
 //=============================================================================
 // Descritpion
-// Current version: 1.2
+// Current version: 1.4.0
 //=============================================================================
 * The plugin allows you to give Gold to the player, at set intervals (this is repeated continuously).
 * In addition to the interval, you can also control the amount of gold you give,
@@ -69,7 +69,11 @@
 * ==============================================================================
 * Changelog
 * ==============================================================================
-* 
+*
+* 1.4
+* New Debug (cheat commands)
+* Fix the "ClearAllMapIDs" Plugin command, and better handling the mapIDs
+*
 * 1.3 
 *
 * Add two new Plugincommand: HideGoldScreen ShowGoldScreen
@@ -268,6 +272,31 @@
 * @value BattleIfNotEnoughMoney
 * @default AlwaysPaidAndBattle
 *
+* @param Debug
+*
+* @param DebugGoldEnable
+* @text Debug system 
+* @parent Debug
+* @type boolean
+* @default false
+* @on Enable
+* @off Disable
+* @desc Enable or disabe the Debug formerly Cheat Command
+*
+* @param CheatGoldGain
+* @text Keydown
+* @parent Debug
+* @type text
+* @default c
+* @desc Set a cheat command keyboard shortcut. When press get money instantly
+*
+* @param CheatGoldAmount
+* @text Gold Amount
+* @parent Debug
+* @type number
+* @default 1000
+* @desc You can set how much gold give to the play when using the cheat command
+*
 */
 
 var INDIE = INDIE || {};
@@ -308,6 +337,11 @@ INDIE.GoldGranter = INDIE.GoldGranter || {};
         StarterGold: Number($.Parameters['StarterGold']),
         previousGold: 0, // Track the previous amount of gold
         StarterGoldAdded: false, // starter gold function
+
+        // Debug (alias cheat)
+        DebugGoldEnable: ($.Parameters['DebugGoldEnable'].toLowerCase() === 'true'),
+        CheatGoldGain: String($.Parameters['CheatGoldGain']) || "c",
+        CheatGoldAmount: Number($.Parameters['CheatGoldAmount']) || 1000,
 
         // encounters params
 
@@ -451,9 +485,16 @@ INDIE.GoldGranter = INDIE.GoldGranter || {};
     // ** Check If Player is on an allowed map
     //=============================================================================
 
+    $.lastMapIDs = []; 
+
     $.isOnAllowedMap = function() {
         if (this.Gold.mapIDs.length === 0) return true;
-
+    
+        if (JSON.stringify(this.Gold.mapIDs) !== JSON.stringify(this.lastMapIDs)) {
+            // Itt frissítheted a színtér adatokat...
+            this.lastMapIDs = [...this.Gold.mapIDs];
+        }
+    
         var currentMapId = $gameMap.mapId();
         return this.Gold.mapIDs.includes(currentMapId);
     };
@@ -504,6 +545,10 @@ INDIE.GoldGranter = INDIE.GoldGranter || {};
         else if(command === 'ClearAllMapIDs') {
             // Clear the mapIDs array
             $.Gold.mapIDs = [];
+            // Stop gold giving
+            // $.stopGoldGiving();
+            // // And start it again
+            // $.startGoldGiving();
         }
         if (command === 'EnableNotifications') {
             $.Gold.NotificationEnable = true;
@@ -944,6 +989,19 @@ Game_Player.prototype.executeEncounter = function() {
 
 
 
+//=============================================================================
+// ** Cheat commands
+//=============================================================================
+
+document.addEventListener('keydown', function(event) {
+    if($.Gold.DebugGoldEnable && $.Gold.CheatGoldGain && event.key === $.Gold.CheatGoldGain.toLowerCase()) {
+        $gameParty.gainGold($.Gold.CheatGoldAmount);
+        // Show the plugin built in notification
+        if (SceneManager._scene._goldNotificationWindow) {
+            SceneManager._scene._goldNotificationWindow.open($.Gold.CheatGoldAmount);
+        }
+    }
+});
 
 
 
