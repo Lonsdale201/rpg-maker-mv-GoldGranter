@@ -65,7 +65,25 @@ At the moment yes. In a future version will add a new settings for the notificat
 
 ### Changelog
 
-Changelog 1.2
+1.3.0
+
+Add two new Plugincommand: HideGoldScreen ShowGoldScreen
+New encounter pay for it system
+Encounter Conditions system: you can select what happen if player meet an encounter 
+- Enable / Disable mode
+- Set amount
+- Conditions:
+- Always paid and battle
+- Paid and bypass the battle
+- Battle if not have enough gold
+
+Buf fixes:
+
+Fixed the issue when player enter a battle, but enabled the "Pause During battle" 
+Nevertheless, the player still got the gold in the background. So Fixed it.
+Complete rewrited the Pause timing system to better handling the pause / continue timing system
+
+1.2.0
  
 New Play Se parameter when player gain a gold. 
 New Scrip call: getGoldInterval() you can use like getGoldInterval() > 3 for the conditional branch.
