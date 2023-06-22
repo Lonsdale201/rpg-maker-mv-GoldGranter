@@ -39,6 +39,8 @@
 *  - EnableNotifications 
 *  - DisableNotifications
 *  - SetGoldInterval 30 (just change the number value)
+*  - HideGoldScreen
+*  - ShowGoldScreen
 * 
 *
 //=============================================================================
@@ -65,8 +67,25 @@
 *  Github: https://github.com/Lonsdale201
 *
 * ==============================================================================
-* Changelog 1.2
+* Changelog
+* ==============================================================================
 * 
+* 1.3 
+*
+* Add two new Plugincommand: HideGoldScreen ShowGoldScreen
+* New encounter pay for it system
+* Encounter Conditions system: you can select what happen if player meet an encounter 
+* - Always paid and battle
+* - Paid and bypass the battle
+* - Battle if not have enough gold
+*
+* - Fixed the issue when player enter a battle, but enabled the "Pause During battle" 
+*   Nevertheless, the player still got the gold in the background. So Fixed it.
+*
+* - Complete rewrited the Pause timing system to better handling the pause / continue timing system
+*
+* ------------------------------------------------------------------------------
+* 1.2
 * New Play Se parameter when player gain a gold. 
 * New Scrip call: getGoldInterval() you can use like getGoldInterval() > 3 for the conditional branch.
 * Added three Message commands:
@@ -215,11 +234,39 @@
 * @desc If you want, you set a starter gold. When game start player automatice have this amount of money, or set 0 for disable.
 *
 * @param PlayAudioOnGoldGain
-* @text Play audio 
+* @text Play audio when gain gold
 * @parent Others
 * @type file
 * @dir audio/se/
 * @desc If you want, when the plkayer gain a gold, play a SE sound
+*
+* @param Encounters
+*
+* @param EncountersGoldPaid
+* @text Encounters paid
+* @parent Encounters
+* @type boolean
+* @default false
+* @desc Enable or disabe if the player meet encounters need to pay for it.
+*
+* @param EncountersGoldAmount
+* @text Paid Amount
+* @parent Encounters
+* @type number
+* @default 0
+* @desc You can customize how much cost will paid. Leave it blank, or use 0 to none.
+*
+* @param EncounterConditions
+* @text Conditions
+* @parent Encounters
+* @type select
+* @option Always Paid and start battle
+* @value AlwaysPaidAndBattle
+* @option Paid but Bypass the battle
+* @value PaidButBypass
+* @option Battle if not have enough money only 
+* @value BattleIfNotEnoughMoney
+* @default AlwaysPaidAndBattle
 *
 */
 
@@ -238,6 +285,7 @@ INDIE.GoldGranter = INDIE.GoldGranter || {};
     $.Gold = {
         enabled: ($.Parameters['EnableAtGameStart'].toLowerCase() === 'true'),
         PlayAudioOnGoldGain: String($.Parameters['PlayAudioOnGoldGain']),
+        PlayAudioWhenRemoveGold: String($.Parameters['PlayAudioWhenRemoveGold']),
         MaxGoldPlayer: Number($.Parameters['MaxGoldPlayer']) || 10000,
         switchToActiveGold: Number($.Parameters['SwitchToActiveGold']) || 0,
         amount: Number($.Parameters['GoldAmount']),
@@ -259,7 +307,13 @@ INDIE.GoldGranter = INDIE.GoldGranter || {};
         shouldAddStarterGold: false,
         StarterGold: Number($.Parameters['StarterGold']),
         previousGold: 0, // Track the previous amount of gold
-        StarterGoldAdded: false // starter gold function
+        StarterGoldAdded: false, // starter gold function
+
+        // encounters params
+
+        EncountersGoldPaid: ($.Parameters['EncountersGoldPaid'].toLowerCase() === 'true'),
+        EncountersGoldAmount: Number($.Parameters['EncountersGoldAmount']) || 0,
+        EncounterConditions: String($.Parameters['EncounterConditions']) || "AlwaysPaidAndBattle"
     };
 
     //=============================================================================
@@ -267,7 +321,7 @@ INDIE.GoldGranter = INDIE.GoldGranter || {};
     //=============================================================================
 
     var _Game_Party_gold = Game_Party.prototype.gold;
-Game_Party.prototype.gold = function() {
+    Game_Party.prototype.gold = function() {
     if ($.Gold.MaxGoldPlayer !== 0) {
         return Math.min(_Game_Party_gold.call(this), $.Gold.MaxGoldPlayer);
     } else {
@@ -290,7 +344,7 @@ Game_Party.prototype.gold = function() {
     }
 
     var _Game_Party_gainGold = Game_Party.prototype.gainGold;
-Game_Party.prototype.gainGold = function(amount) {
+    Game_Party.prototype.gainGold = function(amount) {
     _Game_Party_gainGold.call(this, amount);
     // If the gold amount has not changed, do not show the notification
     if (SceneManager._scene._goldNotificationWindow && $.Gold.StarterGoldAdded && $gameParty.gold() != $.Gold.previousGold) {
@@ -355,17 +409,18 @@ Game_Party.prototype.gainGold = function(amount) {
                 $gameParty.gainGold(this.Gold.amount);
             }
         }
-        
+    
         var newGold = $gameParty.gold();
         // Play sound effect if an audio file is selected
         if (newGold > oldGold && $.Gold.PlayAudioOnGoldGain !== "") {
             AudioManager.playSe({name: $.Gold.PlayAudioOnGoldGain, volume: 100, pitch: 100, pan: 0});
         }
-        
+    
         // Update the previous gold amount
         this.Gold.previousGold = oldGold;
     
         this._goldGivingTimeout = null;
+        this.Gold.elapsed = 0;  // Reset elapsed time here
         this.startGoldGiving();
     };
     
@@ -471,6 +526,19 @@ Game_Party.prototype.gainGold = function(amount) {
                 $.Gold.interval = Number(args[0]);
             }
         } 
+        if (command === 'ShowGoldScreen') {
+            $.Gold.DisplayGoldOnScreen = true;
+            if (!SceneManager._scene._goldWindow) {
+                SceneManager._scene.createGoldWindow();
+            } else {
+                SceneManager._scene._goldWindow.show();
+            }
+        } else if (command === 'HideGoldScreen') {
+            $.Gold.DisplayGoldOnScreen = false;
+            if (SceneManager._scene._goldWindow) {
+                SceneManager._scene._goldWindow.hide();
+            }
+        }
         
     };
 
@@ -571,25 +639,27 @@ Game_Party.prototype.gainGold = function(amount) {
         }
     };
 
-    //=============================================================================
-    // ** Battle Control - Pause and Resume
-    //=============================================================================
 
-    var _Scene_Battle_start = Scene_Battle.prototype.start;
-    Scene_Battle.prototype.start = function() {
-        _Scene_Battle_start.call(this);
-        if($.Gold.pauseDuringBattle) {
-            $.pauseGoldGiving();
-        }
-    };
+//=============================================================================
+// ** Battle Control - Pause and Resume
+//=============================================================================
+    
+var _Scene_Battle_start = Scene_Battle.prototype.start;
+Scene_Battle.prototype.start = function() {
+    _Scene_Battle_start.call(this);
+    if($.Gold.pauseDuringBattle) {
+        $.pauseGoldGiving();
+    }
+};
 
-    var _Scene_Battle_terminate = Scene_Battle.prototype.terminate;
-    Scene_Battle.prototype.terminate = function() {
-        _Scene_Battle_terminate.call(this);
-        if($.Gold.pauseDuringBattle) {
-            $.startGoldGiving();
-        }
-    };
+var _Scene_Battle_terminate = Scene_Battle.prototype.terminate;
+Scene_Battle.prototype.terminate = function() {
+    _Scene_Battle_terminate.call(this);
+    if($.Gold.pauseDuringBattle) {
+        $.startGoldGiving();
+    }
+};
+
 
 
     //=============================================================================
@@ -618,17 +688,22 @@ Game_Party.prototype.gainGold = function(amount) {
     };
 
     var _Scene_Map_start = Scene_Map.prototype.start;
-
-    
     Scene_Map.prototype.start = function() {
         _Scene_Map_start.call(this);
+        
         this.createGoldNotificationWindow();
+        
         if ($.Gold.shouldAddStarterGold) {
             $gameParty.gainGold($.Gold.StarterGold, false, true); 
             $.Gold.StarterGoldAdded = true;
             $.Gold.shouldAddStarterGold = false;
         }
+        
+        if ($.Gold.pauseDuringBattle && SceneManager._previousScene instanceof Scene_Battle) {
+            $.startGoldGiving();
+        }
     };
+    
 
 
     
@@ -817,6 +892,59 @@ Game_Party.prototype.gainGold = function(amount) {
             }
         }
     };
+
+
+
+//=============================================================================
+// ** Encounter system
+//=============================================================================
+
+var _isRandomEncounter = false;
+
+var _Game_Player_executeEncounter = Game_Player.prototype.executeEncounter;
+Game_Player.prototype.executeEncounter = function() {
+    _isRandomEncounter = false;
+    if (_Game_Player_executeEncounter.call(this)) {
+        _isRandomEncounter = true;
+        
+        var encounterCondition = INDIE.GoldGranter.Gold.EncounterConditions;
+
+        // Always Paid and start battle
+        if (encounterCondition === "AlwaysPaidAndBattle") {
+            if (INDIE.GoldGranter.Gold.EncountersGoldPaid && INDIE.GoldGranter.Gold.EncountersGoldAmount > 0 && $gameParty.gold() >= INDIE.GoldGranter.Gold.EncountersGoldAmount) {
+                $gameParty.loseGold(INDIE.GoldGranter.Gold.EncountersGoldAmount);
+            }
+        }
+        // Paid but Bypass the battle
+        else if (encounterCondition === "PaidButBypass") {
+            if (INDIE.GoldGranter.Gold.EncountersGoldPaid && INDIE.GoldGranter.Gold.EncountersGoldAmount > 0 && $gameParty.gold() >= INDIE.GoldGranter.Gold.EncountersGoldAmount) {
+                $gameParty.loseGold(INDIE.GoldGranter.Gold.EncountersGoldAmount);
+                return false;  // Skip the encounter
+            }
+        }
+        // Battle if not have enugh money only
+        else if (encounterCondition === "BattleIfNotEnoughMoney") {
+            if ($gameParty.gold() < INDIE.GoldGranter.Gold.EncountersGoldAmount) {
+                return true;  // Start the encounter
+            } else {
+                return false;  // Skip the encounter
+            }
+        }
+
+        // refresh the gold window
+        if (INDIE.GoldGranter.Gold.DisplayGoldOnScreen && SceneManager._scene._goldWindow) {
+            SceneManager._scene._goldWindow.refresh();
+        }
+
+        return true;
+    } else {
+        return false;
+    }
+};
+
+
+
+
 
 
 
