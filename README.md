@@ -14,7 +14,11 @@ This RPG MAKER MV - plugin can modify the gold system with various way.
 * you want you can add a starting gold (saving the creation of an unnecessary event).
 *
 * It also has a notification system that you can enable, so a small window will pop up 
-* when you have gold (it currently pops up for all gold events).
+* when you have gold (it currently pops up for all gold events). (better to use only for debug)
+* New Encounter gold control system - You can decide during encounters what happens , you pay + you fight
+* You pay, but you don't fight
+* You only fight if you don't have enough money (no money loss)
+* You can set the amount and whether you want to use this system.
 * There are also several plugin commands you can use, so you can override plugin settings at any time.
 
 ## How to setup?
@@ -32,6 +36,8 @@ Just download the **INDIE_GoldGranter.js** file, paste it in your project folder
   - EnableNotifications 
   - DisableNotifications
   - SetGoldInterval 30 (just change the number value)
+  - HideGoldScreen
+  - ShowGoldScreen
 
 
 **Script calls:**
@@ -59,8 +65,7 @@ Just set The Max gold parameter to 0.
 
 **4, The plugin Notification system react all gold changes?**
 At the moment yes. In a future version will add a new settings for the notifications like, only with the Plugin notif,  or everyting, and or just increase, and for decrease too.
-
-
+At the moment the notification system better use only for debugging.
 
 
 ### Changelog
